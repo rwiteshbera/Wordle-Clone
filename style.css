@@ -88,7 +88,7 @@ body {
 } */
 
 .tile[data-state="wrong"] {
-    background-color: #121213;
+    background-color: #3a3a3a;
 }
 
 .tile[data-state="wrong-location"] {
