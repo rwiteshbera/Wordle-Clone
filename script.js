@@ -15291,6 +15291,7 @@ const dictionary = [
 ];
 
 const guessGrid = document.getElementsByClassName("guess-grid");
+const keyboard = document.getElementsByClassName("keyboard");
 const offsetFromDate = new Date(2022, 0, 1);
 const msOffset = Date.now() - offsetFromDate;
 const dayOffset = msOffset / 1000 / 60 / 60 / 24;
@@ -15324,7 +15325,7 @@ const handleMouseClick = (e) => {
 
 const handleKeyPress = (e) => {
   if (e.key === "Enter") {
-    submitGuess()
+    submitGuess();
     return;
   }
 
@@ -15346,9 +15347,11 @@ const pressKey = (key) => {
 
   if (guessGrid[0].children[x].innerText == "") {
     guessGrid[0].children[x].innerText = key.toUpperCase();
+    guessGrid[0].children[x].dataset.letter = key;
     guessGrid[0].children[x].dataset.state = "active";
   } else if (x + 1 < guessGrid[0].children.length) {
     guessGrid[0].children[++x].innerText = key.toUpperCase();
+    guessGrid[0].children[x].dataset.letter = key;
     guessGrid[0].children[x].dataset.state = "active";
   }
 };
@@ -15364,54 +15367,131 @@ const pressDelete = () => {
 };
 
 const submitGuess = () => {
-    const activeCells = getActiveCells();
-    if(activeCells.length < 5) {
-        showAlert("Not enough letters!");
-        shakeTiles(activeCells);
-    } 
-    
-    const guess = activeCells.map((cell) => cell.innerText).join("").toLowerCase();
-    
-    if(dictionary.includes(guess)) {
-        showAlert("Correct!");
-    } else {
-        showAlert("Not in word list!");
-        shakeTiles(activeCells);
-        return
-    }
+  const activeCells = getActiveCells();
+  if (activeCells.length < 5) {
+    showAlert("Not enough letters!");
+    shakeTiles(activeCells);
+  }
+
+  const guess = activeCells
+    .map((cell) => cell.innerText)
+    .join("")
+    .toLowerCase();
+
+  if (!dictionary.includes(guess)) {
+    showAlert("Not in word list!");
+    shakeTiles(activeCells);
+    return;
+  }
+  stoptInteraction();
+  activeCells.forEach((cell) => {
+    flipTile(cell, guess, activeCells);
+  });
 };
 
 const getActiveCells = () => {
-    const activeCells = [];
-    for (let i = 0; i < guessGrid[0].children.length; i++) {
-        if (guessGrid[0].children[i].dataset.state === "active") {
-            activeCells.push(guessGrid[0].children[i]);
-        }
+  const activeCells = [];
+  for (let i = 0; i < guessGrid[0].children.length; i++) {
+    if (guessGrid[0].children[i].dataset.state === "active") {
+      activeCells.push(guessGrid[0].children[i]);
     }
-    return activeCells;
-}
+  }
+  return activeCells;
+};
 
 const showAlert = (message, duration = 1000) => {
-    const alert = document.createElement("div");
-    alert.textContent = message;
-    alert.classList.add("alert");
-    document.getElementById('alert-container').appendChild(alert);
+  const alert = document.createElement("div");
+  alert.textContent = message;
+  alert.classList.add("alert");
+  document.getElementById("alert-container").appendChild(alert);
 
-    if (duration == null) return
+  if (duration == null) return;
 
-    setTimeout(() => {
-        alert.classList.add("hide");
-        alert.remove();
-    }, duration)
-}
+  setTimeout(() => {
+    alert.classList.add("hide");
+    alert.remove();
+  }, duration);
+};
 
 const shakeTiles = (tiles) => {
-    tiles.forEach(tile => {
-        tile.classList.add("shake");
-        tile.addEventListener("animationend", () => {
-            tile.classList.remove("shake");
-        });
-    }, {once: true});
+  tiles.forEach(
+    (tile) => {
+      tile.classList.add("shake");
+      tile.addEventListener("animationend", () => {
+        tile.classList.remove("shake");
+      });
+    },
+    { once: true }
+  );
+};
+
+var timeAnimation = 1;
+var idx = 0;
+const flipTile = (tile, guess, tiles) => {
+  const letter = tile.dataset.letter;
+  setTimeout(() => {
+    tile.classList.add("flip");
+  }, timeAnimation++ * 200);
+  tile.addEventListener(
+    "transitionstart",
+    () => {
+      if (targetWord[idx % 5] === letter) {
+        tile.dataset.state = "correct";
+      } else if (targetWord.includes(letter)) {
+        tile.dataset.state = "incorrect";
+      } else {
+        tile.dataset.state = "wrong";
+      }
+      idx++;
+
+      if (
+        idx === 5 ||
+        idx === 10 ||
+        idx === 15 ||
+        idx === 20 ||
+        idx == 25 ||
+        idx == 30
+      ) {
+        if (idx == 30) {
+          stoptInteraction();
+        }
+        setTimeout(() => {
+          checkWinLose(guess, targetWord, tiles);
+        }, 1000);
+        startInteraction();
+      }
+    },
+    timeAnimation++ * 200
+  );
+};
+
+
+var dur = 1;
+const  danceTiles = (tiles) => {
+  tiles.forEach((tile, duration) => {
+    setTimeout(() => {
+      tile.classList.add("dance")
+      tile.addEventListener(
+        "animationend",
+        () => {
+          tile.classList.remove("dance")
+        },
+        { once: true }
+      )
+    }, (2 * dur) + 1000)
+  })
 }
+
+
+
+const checkWinLose = (guess, targetWord, tiles) => {
+  if (guess.toLowerCase() === targetWord.toLowerCase()) {
+    danceTiles(tiles);
+    setTimeout(() => {
+      showAlert("You win!");
+    }, 2000);
+    stoptInteraction();
+  }
+};
 
 startInteraction();
