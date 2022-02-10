@@ -15313,7 +15313,7 @@ const handleMouseClick = (e) => {
   }
 
   if (e.target.matches("[data-enter]")) {
-    pressEnter();
+    submitGuess();
     return;
   }
 
@@ -15335,7 +15335,7 @@ const handleKeyPress = (e) => {
   }
 
   if (e.key.match(/^[a-z]$/)) {
-    pressKey(e.key);
+    pressKey(e.key.toLowerCase());
     return;
   }
 };
